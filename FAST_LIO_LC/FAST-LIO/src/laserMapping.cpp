@@ -529,7 +529,7 @@ void publish_frame_world(const ros::Publisher & pubLaserCloudFull)
         sensor_msgs::PointCloud2 laserCloudmsg;
         pcl::toROSMsg(*laserCloudWorld, laserCloudmsg);
         laserCloudmsg.header.stamp = ros::Time().fromSec(lidar_end_time);
-        laserCloudmsg.header.frame_id = "world";
+        laserCloudmsg.header.frame_id = "camera_init";
         pubLaserCloudFull.publish(laserCloudmsg);
         publish_count -= PUBFRAME_PERIOD;
     }
@@ -566,7 +566,7 @@ void publish_frame_body(const ros::Publisher & pubLaserCloudFull_body)
     sensor_msgs::PointCloud2 laserCloudmsg;
     pcl::toROSMsg(*laserCloudIMUBody, laserCloudmsg);
     laserCloudmsg.header.stamp = ros::Time().fromSec(lidar_end_time);
-    laserCloudmsg.header.frame_id = "robot_base_link";
+    laserCloudmsg.header.frame_id = "body";
     laserCloudmsg.header.seq = data_seq;
     pubLaserCloudFull_body.publish(laserCloudmsg);
     cloudBuff.push( pair<int, PointCloudXYZI::Ptr>(data_seq ,laserCloudIMUBody) );  // 缓存所有发给后端的点云
@@ -595,7 +595,7 @@ void publish_effect_world(const ros::Publisher & pubLaserCloudEffect)
     sensor_msgs::PointCloud2 laserCloudFullRes3;
     pcl::toROSMsg(*laserCloudWorld, laserCloudFullRes3);
     laserCloudFullRes3.header.stamp = ros::Time().fromSec(lidar_end_time);
-    laserCloudFullRes3.header.frame_id = "world";
+    laserCloudFullRes3.header.frame_id = "camera_init";
     pubLaserCloudEffect.publish(laserCloudFullRes3);
 }
 
@@ -604,7 +604,7 @@ void publish_map(const ros::Publisher & pubLaserCloudMap)
     sensor_msgs::PointCloud2 laserCloudMap;
     pcl::toROSMsg(*featsFromMap, laserCloudMap);
     laserCloudMap.header.stamp = ros::Time().fromSec(lidar_end_time);
-    laserCloudMap.header.frame_id = "world";
+    laserCloudMap.header.frame_id = "camera_init";
     pubLaserCloudMap.publish(laserCloudMap);
 }
 
@@ -623,9 +623,9 @@ void set_posestamp(T & out)
 
 void publish_odometry(const ros::Publisher & pubOdomAftMapped)
 {
-    odomAftMapped.header.frame_id = "world";
+    odomAftMapped.header.frame_id = "camera_init";
     odomAftMapped.header.seq = data_seq;
-    odomAftMapped.child_frame_id = "robot_base_link";
+    odomAftMapped.child_frame_id = "body";
     odomAftMapped.header.stamp = ros::Time().fromSec(lidar_end_time);// ros::Time().fromSec(lidar_end_time);
     set_posestamp(odomAftMapped.pose);
 
@@ -656,14 +656,14 @@ void publish_odometry(const ros::Publisher & pubOdomAftMapped)
     q.setY(odomAftMapped.pose.pose.orientation.y);
     q.setZ(odomAftMapped.pose.pose.orientation.z);
     transform.setRotation( q );
-    br.sendTransform( tf::StampedTransform( transform, odomAftMapped.header.stamp, "world", "robot_base_link" ) );
+    br.sendTransform( tf::StampedTransform( transform, odomAftMapped.header.stamp, "camera_init", "body" ) );
 }
 
 void publish_path(const ros::Publisher pubPath)
 {
     set_posestamp(msg_body_pose);
     msg_body_pose.header.stamp = ros::Time().fromSec(lidar_end_time);
-    msg_body_pose.header.frame_id = "world";
+    msg_body_pose.header.frame_id = "camera_init";
 
     /*** if path is too large, the rvis will crash ***/
     static int jjj = 0;
@@ -823,9 +823,9 @@ int main(int argc, char** argv)
     nh.param<bool>("visulize_map", visulize_map, false);
 
     path.header.stamp    = ros::Time::now();
-    path.header.frame_id ="world";
+    path.header.frame_id ="camera_init";
     path_updated.header.stamp    = ros::Time::now();
-    path_updated.header.frame_id ="world";
+    path_updated.header.frame_id ="camera_init";
 
     /*** variables definition ***/
     int effect_feat_num = 0, frame_num = 0;
@@ -1105,7 +1105,7 @@ int main(int argc, char** argv)
                     msg_body_pose_updated.pose.orientation.z = state_updated.rot.z();
                     msg_body_pose_updated.pose.orientation.w = state_updated.rot.w();
                     msg_body_pose_updated.header.stamp = ros::Time().fromSec(lidar_end_time);
-                    msg_body_pose_updated.header.frame_id = "world";
+                    msg_body_pose_updated.header.frame_id = "camera_init";
 
                     /*** if path is too large, the rvis will crash ***/
                     static int jjj = 0;
